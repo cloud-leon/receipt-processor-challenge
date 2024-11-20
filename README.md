@@ -7,7 +7,76 @@ described API to test your solution.
 Provide any instructions required to run your application.
 
 Data does not need to persist when your application stops. It is sufficient to store information in memory. There are too many different database solutions, we will not be installing a database on our system when testing your application.
+Here’s an improved and more polished version of your README instructions:
 
+---
+
+# **How to Use**
+
+Follow these steps to set up and use the Receipt Processor Challenge application:
+
+### **1. Clone the Repository**
+```bash
+git clone https://github.com/cloud-leon/receipt-processor-challenge
+```
+
+### **2. Start the Application**
+- Open a terminal in the project directory and run:
+```bash
+docker compose up --build
+```
+
+### **3. Run Tests**
+- Open a **new terminal** and run:
+```bash
+pytest test_main.py
+```
+This will execute all the example tests in the `examples` folder.
+
+---
+
+### **Manual Testing**
+
+#### **Submit a Receipt**
+Use the following `curl` command to submit a receipt for processing:
+```bash
+curl -X POST "http://localhost:8000/receipts/process" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "retailer": "M&M Corner Market",
+           "purchaseDate": "2022-01-01",
+           "purchaseTime": "13:01",
+           "items": [{"shortDescription": "Mountain Dew 12PK", "price": "6.49"}],
+           "total": "6.49"
+         }'
+```
+
+**Expected Response:**
+```json
+{"id": "ID"}
+```
+
+#### **Retrieve Points for a Receipt**
+Replace `{id}` with the receipt ID returned from the previous step and run:
+```bash
+curl -X GET "http://localhost:8000/receipts/{id}/points"
+```
+
+**Example Response:**
+```json
+{"points": 100}
+```
+
+---
+
+### **Notes**
+- Ensure that Docker is installed and running before starting the application.
+- The examples in the `examples` folder are pre-configured to work with the provided `pytest` setup.
+- Use the above commands to manually test the application or build upon the existing framework.
+
+---
+
+This version improves the flow, readability, and formatting while ensuring a professional tone. Let me know if you’d like further refinements!
 ## Language Selection
 
 You can assume our engineers have Go and Docker installed to run your application. Go is our preferred language, but it is not a requirement for this exercise. If you are not using Go, include a Dockerized setup to run the code. You should also provide detailed instructions if your Docker file requires any additional configuration to run the application.
