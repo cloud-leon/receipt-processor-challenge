@@ -1,4 +1,4 @@
-# Receipt Processor
+# Receipt Processor - Levi Makwei
 
 Build a webservice that fulfils the documented API. The API is described below. A formal definition is provided 
 in the [api.yml](./api.yml) file, but the information in this README is sufficient for completion of this challenge. We will use the 
