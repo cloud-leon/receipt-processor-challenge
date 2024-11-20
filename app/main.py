@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Path, Request, logger
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from pydantic.class_validators import field_validator
+from pydantic.class_validators import validator
 from uuid import uuid4
 from datetime import date, time
 from typing import List, Dict
@@ -19,24 +19,91 @@ class PointsCalculationError(Exception):
     pass
 
 # Models based on OpenAPI specification
+from pydantic import BaseModel, Field, validator
 class Item(BaseModel):
-    shortDescription: str = Field(..., regex=r"^[\w\s\-]+$", example="Mountain Dew 12PK")
-    price: str = Field(..., regex=r"^\d+\.\d{2}$", example="6.49")
+    shortDescription: str = Field(
+        ...,
+        example="Mountain Dew 12PK",
+        description="A short description of the item."
+    )
+    price: str = Field(
+        ...,
+        example="6.49",
+        description="The price of the item, formatted as a string with two decimal places."
+    )
+
+    @validator("shortDescription")
+    def validate_short_description(cls, description: str) -> str:
+        """Ensure the description contains only valid characters."""
+        if not all(c.isalnum() or c.isspace() or c in {'-', '_'} for c in description):
+            raise ValueError(
+                "Short description must contain only alphanumeric characters, spaces, hyphens, or underscores."
+            )
+        return description.strip()
+
+    @validator("price")
+    def validate_price(cls, price: str) -> str:
+        """Ensure the price is a valid string representing a float with two decimal places."""
+        try:
+            parsed_price = float(price)
+            if parsed_price <= 0:
+                raise ValueError("Price must be greater than zero.")
+            # Ensure it has exactly two decimal places
+            if len(price.split('.')[-1]) != 2:
+                raise ValueError("Price must have exactly two decimal places.")
+        except ValueError:
+            raise ValueError("Price must be a valid number formatted as a string (e.g., '6.49').")
+        return price
 
 class Receipt(BaseModel):
-    retailer: str = Field(..., regex=r"^[\w\s\-&]+$", example="M&M Corner Market")
-    purchaseDate: date = Field(..., example="2022-01-01")
-    purchaseTime: time = Field(..., example="13:01")
-    items: List[Item] = Field(..., min_items=1)
-    total: str = Field(..., regex=r"^\d+\.\d{2}$", example="6.49")
+    retailer: str = Field(
+        ...,
+        example="M&M Corner Market",
+        description="The name of the retailer or store."
+    )
+    purchaseDate: date = Field(
+        ...,
+        example="2022-01-01",
+        description="The date of the purchase in YYYY-MM-DD format."
+    )
+    purchaseTime: time = Field(
+        ...,
+        example="13:01",
+        description="The time of the purchase in 24-hour format (HH:MM)."
+    )
+    items: List[Item] = Field(
+        ...,
+        description="A list of at least one purchased item."
+    )
+    total: str = Field(
+        ...,
+        example="6.49",
+        description="The total amount paid, formatted as a string with two decimal places."
+    )
 
-    @field_validator("total")
-    def validate_total(cls, total):
+    @validator("retailer")
+    def validate_retailer(cls, retailer: str) -> str:
+        """Ensure the retailer name contains valid characters."""
+        if not all(c.isalnum() or c.isspace() or c in {'-', '&'} for c in retailer):
+            raise ValueError(
+                "Retailer name must contain only alphanumeric characters, spaces, hyphens, or ampersands."
+            )
+        return retailer.strip()
+
+    @validator("total")
+    def validate_total(cls, total: str) -> str:
+        """Ensure the total is a valid string representing a float with two decimal places."""
         try:
-            float(total)
+            parsed_total = float(total)
+            if parsed_total <= 0:
+                raise ValueError("Total must be greater than zero.")
+            # Ensure it has exactly two decimal places
+            if len(total.split('.')[-1]) != 2:
+                raise ValueError("Total must have exactly two decimal places.")
         except ValueError:
             raise ValueError("Total must be a valid number formatted as a string (e.g., '6.49').")
         return total
+
 
 # Endpoint: Submit a receipt
 @app.post("/receipts/process", status_code=200)
